@@ -11,7 +11,7 @@ RESET="\e[0m"
 
 wins=0
 playthrough=0
-player_name=""
+
 
 # ask player name
 greet_user(){
@@ -38,6 +38,7 @@ play_again(){
 
 # main menu
 main_menu(){
+    header=""
     clear
     if [ "$player_name" == "" ]; then
         greet_user
@@ -94,6 +95,7 @@ play_game(){
 
     while [ $attempts -gt 0 ]; do
         clear
+        echo -e "${CYAN}=== NUMBER GUESSING GAME FOR ${GREEN}$player_name${CYAN} ===${RESET}"
 
         # show previous guess if exists
         if [ "$prev_guess" != "" ]; then
