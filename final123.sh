@@ -1,121 +1,248 @@
 #!/bin/bash
 
-greet_user() {
-    read -p "Whats your name? " user_name
-    if [ -z "$user_name" ]; then
-        echo "Hello User!"
-    else
-        echo "Hello $user_name"
-    fi
-}
+# colors to make the game look nicer
+RED="\e[31m"
+GREEN="\e[32m"
+BLUE="\e[34m"
+MAGENTA="\e[35m"
+CYAN="\e[36m"
+YELLOW="\e[33m"
+RESET="\e[0m"
 
-difficulty_level(){
-    read -p " $user_name Choose a difficulty level Easy, Medium, or Hard: " difficulty
-    case "${difficulty,,}" in
-        easy) easy ;;
-        medium) medium ;;
-        hard) hard ;;
-        *) echo "Invalid difficulty level."; difficulty_level ;;
+# keeps track of how many times the user wins
+wins=0
+
+# main menu where the user chooses what game mode to play
+main_menu(){
+    read -p "Whats your name? " player_name
+    if [ -z "$player_name" ]; then
+        player_name="Player"
+    fi
+   
+    echo
+    echo -e "${CYAN}=== NUMBER GUESSING GAME FOR ${GREEN}$player_name${CYAN} ===${RESET}"
+    echo "Wins: $wins"
+    echo -e "${YELLOW}1) Classic Game${RESET}"
+    echo -e "${YELLOW}2) Custom Game${RESET}"
+    echo -e "${YELLOW}3) Exit${RESET}"
+    echo
+
+    read -p "Choose an option: " choice
+
+    case "$choice" in
+        1|Classic|classic|Classic game|Classic Game|classic game) classic_menu ;;
+        2|Custom|custom|Custom game|Custom Game|custom game) custom_game ;;
+        3)
+            echo -e "${GREEN}Thanks for playing!${RESET}"
+            exit
+            ;;
+        *)
+            echo -e "${RED}Invalid choice.${RESET}"
+            main_menu
+            ;;
     esac
 }
 
-easy(){
-    attempts=10
-    comp_num=$((RANDOM % 10 + 1))
-    while [[ $attempts -gt 0 ]]; do
-        read -p " $user_name Choose a number between 1 and 10: " user_num
+# menu for classic difficulty selection
+classic_menu(){
+    echo
+    read -p "Choose difficulty (Easy, Medium, Hard or Back): " difficulty
 
-        if [[ ! "$user_num" =~ ^[0-9]+$ ]]; then
-        echo "Numbers only! Try again."
-        continue
-    fi
-        if [[ $user_num -lt $comp_num ]]; then
-            echo "Too Low"
-        elif [[ $user_num -gt $comp_num ]]; then
-            echo "Too High"
-        else
-            echo "You got it!"
-            break
-        fi
-        ((attempts--))
-        echo " $user_name You have $attempts attempts remaining to guess the number."
-    done
- [[ $attempts -eq 0 ]] && echo "You've run out of guesses, you lose. The number was $comp_num."
-    read -p "Would you like to play again? (yes/no): " play_again
-    if [[ "$play_again" = "yes" ]]; then
-    	difficulty_level
-    else 
-    	echo "Thanks for playing! $user_name "
-    	
-    fi
+    case $difficulty in
+        easy|Easy) easy ;;
+        medium|Medium) medium ;;
+        hard|Hard) hard ;;
+        back|Back) main_menu ;;
+        *)
+            echo -e "${RED}Invalid difficulty.${RESET}"
+            classic_menu
+            ;;
+    esac
 }
 
+# easy mode guessing game
+easy(){
+    attempts=6
+    comp_num=$((RANDOM % 10 + 1))
+    prev_guess=""
+
+    while [[ $attempts -gt 0 ]]; do
+        if [[ -n "$prev_guess" ]]; then
+            echo -e "${MAGENTA}Previous guess: $prev_guess${RESET}"
+        fi
+        read -p "Guess (1–10): " user_num
+
+        if [[ ! "$user_num" =~ ^[0-9]+$ ]]; then
+            echo "Numbers only!"
+            continue
+        fi
+
+        prev_guess=$user_num
+
+        if [[ $user_num -lt $comp_num ]]; then
+            echo -e "${BLUE}Too Low${RESET}"
+        elif [[ $user_num -gt $comp_num ]]; then
+            echo -e "${RED}Too High${RESET}"
+        else
+            echo -e "${GREEN}You got it!${RESET}"
+            ((wins++))
+            read -p "Play again? (y/n): " again
+            if [[ $again == "y" || $again == "Y" ]]; then
+                main_menu
+            else
+                echo -e "${GREEN}Thanks for playing!${RESET}"
+                exit
+            fi
+            return
+        fi
+
+        ((attempts--))
+        echo "Attempts left: $attempts"
+    done
+
+    echo "Out of guesses. Number was $comp_num."
+    classic_menu
+}
+
+# medium mode guessing game
 medium(){
     attempts=10
     comp_num=$((RANDOM % 50 + 1))
+    prev_guess=""
+
     while [[ $attempts -gt 0 ]]; do
-       read -p " $user_name Choose a number between 1 and 10: " user_num
+        if [[ -n "$prev_guess" ]]; then
+            echo -e "${MAGENTA}Previous guess: $prev_guess${RESET}"
+        fi
+        read -p "Guess (1–50): " user_num
 
         if [[ ! "$user_num" =~ ^[0-9]+$ ]]; then
-        echo "Numbers only! Try again."
-        continue
-    fi
-        if [[ $user_num -lt $comp_num ]]; then
-            echo "Too Low"
-        elif [[ $user_num -gt $comp_num ]]; then
-            echo "Too High"
-        else
-            echo "You got it!"
-            break
+            echo "Numbers only!"
+            continue
         fi
+
+        prev_guess=$user_num
+
+        if [[ $user_num -lt $comp_num ]]; then
+            echo -e "${BLUE}Too Low${RESET}"
+        elif [[ $user_num -gt $comp_num ]]; then
+            echo -e "${RED}Too High${RESET}"
+        else
+            echo -e "${GREEN}You got it!${RESET}"
+            ((wins++))
+            read -p "Play again? (y/n): " again
+            if [[ $again == "y" || $again == "Y" ]]; then
+                main_menu
+            else
+                echo -e "${GREEN}Thanks for playing!${RESET}"
+                exit
+            fi
+            return
+        fi
+
         ((attempts--))
-       echo " $user_name You have $attempts attempts remaining to guess the number."
+        echo "Attempts left: $attempts"
     done
-     [[ $attempts -eq 0 ]] && echo "You've run out of guesses, you lose. The number was $comp_num."
-    read -p "Would you like to play again? (yes/no): " play_again
-    if [[ "$play_again" = "yes" ]]; then
-    	difficulty_level
-    else 
-    	echo "Thanks for playing! $user_name "
-    	
-    fi
+
+    echo "Out of guesses. Number was $comp_num."
+    classic_menu
 }
 
+# hard mode guessing game
 hard(){
     attempts=10
     comp_num=$((RANDOM % 100 + 1))
+    prev_guess=""
 
     while [[ $attempts -gt 0 ]]; do
-        read -p " $user_name Choose a number between 1 and 100: " user_num
+        if [[ -n "$prev_guess" ]]; then
+            echo -e "${MAGENTA}Previous guess: $prev_guess${RESET}"
+        fi
+        read -p "Guess (1–100): " user_num
 
         if [[ ! "$user_num" =~ ^[0-9]+$ ]]; then
-        echo "Numbers only! Try again."
-        continue
-    fi
+            echo "Numbers only!"
+            continue
+        fi
+
+        prev_guess=$user_num
 
         if [[ $user_num -lt $comp_num ]]; then
-            echo "Too Low"
+            echo -e "${BLUE}Too Low${RESET}"
         elif [[ $user_num -gt $comp_num ]]; then
-            echo "Too High"
+            echo -e "${RED}Too High${RESET}"
         else
-            echo "You got it!"
-            break
+            echo -e "${GREEN}You got it!${RESET}"
+            ((wins++))
+            read -p "Play again? (y/n): " again
+            if [[ $again == "y" || $again == "Y" ]]; then
+                main_menu
+            else
+                echo -e "${GREEN}Thanks for playing!${RESET}"
+                exit
+            fi
+            return
         fi
 
         ((attempts--))
-        echo " $user_name You have $attempts attempts remaining to guess the number."
+        echo "Attempts left: $attempts"
     done
 
-    [[ $attempts -eq 0 ]] && echo "You've run out of guesses, you lose. The number was $comp_num."
-
-    read -p "Would you like to play again? (yes/no): " play_again
-    if [[ "$play_again" = "yes" ]]; then
-        difficulty_level
-    else
-        echo "Thanks for playing! $user_name"
-    fi
+    echo "Out of guesses. Number was $comp_num."
+    classic_menu
 }
 
+# custom game where the user chooses range and attempts
+custom_game(){
+    read -p "Max number: " max_num
+    read -p "Attempts: " attempts
 
-greet_user
-difficulty_level
+    if [[ ! "$max_num" =~ ^[0-9]+$ || ! "$attempts" =~ ^[0-9]+$ ]]; then
+        echo "Numbers only."
+        main_menu
+        return
+    fi
+
+    comp_num=$((RANDOM % max_num + 1))
+    prev_guess=""
+
+    while [[ $attempts -gt 0 ]]; do
+        if [[ -n "$prev_guess" ]]; then
+            echo -e "${MAGENTA}Previous guess: $prev_guess${RESET}"
+        fi
+        read -p "Your guess: " user_num
+
+        if [[ ! "$user_num" =~ ^[0-9]+$ ]]; then
+            echo "Numbers only!"
+            continue
+        fi
+
+        prev_guess=$user_num
+
+        if [[ $user_num -lt $comp_num ]]; then
+            echo -e "${BLUE}Too Low${RESET}"
+        elif [[ $user_num -gt $comp_num ]]; then
+            echo -e "${RED}Too High${RESET}"
+        else
+            echo -e "${GREEN}You got it!${RESET}"
+            ((wins++))
+            read -p "Play again? (y/n): " again
+            if [[ $again == "y" || $again == "Y" ]]; then
+                main_menu
+            else
+                echo -e "${GREEN}Thanks for playing!${RESET}"
+                exit
+            fi
+            return
+        fi
+
+        ((attempts--))
+        echo "Attempts left: $attempts"
+    done
+
+    echo "Out of guesses. Number was $comp_num."
+    main_menu
+}
+
+# starts the program
+main_menu
